@@ -9,7 +9,6 @@ import java.util.List;
 
 @Repository
 public interface SubCategoryRepository extends JpaRepository<SubCategory,Long> {
-
     @Query("SELECT s.subcategoryName, p.name, c.categoryName " +
             "FROM SubCategory s " +
             "JOIN s.products p " +

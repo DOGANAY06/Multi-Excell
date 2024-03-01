@@ -19,39 +19,42 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Service
-@RequiredArgsConstructor
+@Service // Spring tarafından yönetilen bir servis olduğunu belirtir.
+@RequiredArgsConstructor // Lombok kütüphanesi ile otomatik olarak constructor oluşturulmasını sağlar.
 public class ExcelMultiServiceImpl implements ExcelMultiService {
 
-
+    // ProductService, CategoryService ve SubCategoryService'yi enjekte etmek için final değişkenler.
     private final ProductService productService;
     private final CategoryService categoryService;
     private final SubCategoryService subCategoryService;
 
+    // Birden fazla sayfa içeren Excel dosyasını oluşturan metot.
     public Resource exportMultiSheetExcel() {
-        Workbook workbook = new XSSFWorkbook();
+        Workbook workbook = new XSSFWorkbook(); // Apache POI kütüphanesiyle bir Excel çalışma kitabı oluşturur.
 
-        addProductsSheet(workbook);
-        addCategoriesSheet(workbook);
-        addSubCategoriesSheet(workbook);
+        addProductsSheet(workbook); // Ürünler sayfasını Excel'e ekler.
+        addCategoriesSheet(workbook); // Kategoriler sayfasını Excel'e ekler.
+        addSubCategoriesSheet(workbook); // Alt kategoriler sayfasını Excel'e ekler.
 
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-            workbook.write(outputStream);
-            return new ByteArrayResource(outputStream.toByteArray());
+            workbook.write(outputStream); // Workbook'ü bir byte dizisine yazarak Excel dosyasını oluşturur.
+            return new ByteArrayResource(outputStream.toByteArray()); // Oluşturulan Excel dosyasını bir ByteArrayResource olarak döndürür.
         } catch (IOException e) {
             e.printStackTrace();
-            throw new RuntimeException("Failed to create Excel file");
+            throw new RuntimeException("Failed to create Excel file"); // Excel dosyası oluşturulamazsa bir hata fırlatır.
         }
     }
 
+    // Ürünler sayfasını Excel'e ekleyen metot.
     private void addProductsSheet(Workbook workbook) {
-        Sheet sheet = workbook.createSheet("Products");
-        List<ProductDTO> products = productService.getAllProduct();
-        addHeaders(sheet, "ID", "Name", "Code", "Price", "Quantity", "Category", "SubCategory");
+        Sheet sheet = workbook.createSheet("Products"); // "Products" adında bir Excel sayfası oluşturur.
+        List<ProductDTO> products = productService.getAllProduct(); // Tüm ürünleri ProductService'den alır.
+        addHeaders(sheet, "ID", "Name", "Code", "Price", "Quantity", "Category", "SubCategory"); // Başlıkları ekler.
 
-        int rowIdx = 1;
-        for (ProductDTO product : products) {
-            Row row = sheet.createRow(rowIdx++);
+        int rowIdx = 1; // Başlıkların altından başlamak için satır indeksi.
+        for (ProductDTO product : products) { // Her ürün için döngü.
+            Row row = sheet.createRow(rowIdx++); // Satır oluşturur ve satır indeksini artırır.
+            // Ürün özelliklerini hücrelere ekler.
             row.createCell(0).setCellValue(product.getId());
             row.createCell(1).setCellValue(product.getName());
             row.createCell(2).setCellValue(product.getCode());
@@ -62,14 +65,16 @@ public class ExcelMultiServiceImpl implements ExcelMultiService {
         }
     }
 
+    // Kategoriler sayfasını Excel'e ekleyen metot.
     private void addCategoriesSheet(Workbook workbook) {
-        Sheet sheet = workbook.createSheet("Categories");
-        List<CategoryDTO> categories = categoryService.getAllCategory();
-        addHeaders(sheet, "ID", "Name", "Products", "SubCategories");
+        Sheet sheet = workbook.createSheet("Categories"); // "Categories" adında bir Excel sayfası oluşturur.
+        List<CategoryDTO> categories = categoryService.getAllCategory(); // Tüm kategorileri CategoryService'den alır.
+        addHeaders(sheet, "ID", "Name", "Products", "SubCategories"); // Başlıkları ekler.
 
-        int rowIdx = 1;
-        for (CategoryDTO category : categories) {
-            Row row = sheet.createRow(rowIdx++);
+        int rowIdx = 1; // Başlıkların altından başlamak için satır indeksi.
+        for (CategoryDTO category : categories) { // Her kategori için döngü.
+            Row row = sheet.createRow(rowIdx++); // Satır oluşturur ve satır indeksini artırır.
+            // Kategori özelliklerini hücrelere ekler.
             row.createCell(0).setCellValue(category.getCategoryId());
             row.createCell(1).setCellValue(category.getCategoryName());
             row.createCell(2).setCellValue(String.join(",", category.getProductNames()));
@@ -77,18 +82,20 @@ public class ExcelMultiServiceImpl implements ExcelMultiService {
         }
     }
 
+    // Alt kategoriler sayfasını Excel'e ekleyen metot.
     private void addSubCategoriesSheet(Workbook workbook) {
-        Sheet sheet = workbook.createSheet("SubCategories");
-        List<SubCategoryDTO> subCategories = subCategoryService.getAllSubCategory();
-        addHeaders(sheet, "ID", "Name", "Products","Category");
+        Sheet sheet = workbook.createSheet("SubCategories"); // "SubCategories" adında bir Excel sayfası oluşturur.
+        List<SubCategoryDTO> subCategories = subCategoryService.getAllSubCategory(); // Tüm alt kategorileri SubCategoryService'den alır.
+        addHeaders(sheet, "ID", "Name", "Products", "Category"); // Başlıkları ekler.
 
-        int rowIdx = 1;
-        for (SubCategoryDTO subCategory : subCategories) {
-            Row row = sheet.createRow(rowIdx++);
+        int rowIdx = 1; // Başlıkların altından başlamak için satır indeksi.
+        for (SubCategoryDTO subCategory : subCategories) { // Her alt kategori için döngü.
+            Row row = sheet.createRow(rowIdx++); // Satır oluşturur ve satır indeksini artırır.
+            // Alt kategori özelliklerini hücrelere ekler.
             if (subCategory.getSubcategoryId() != null) {
                 row.createCell(0).setCellValue(subCategory.getSubcategoryId());
             } else {
-                row.createCell(0).setCellValue(""); // veya başka bir değer atayabilirsiniz
+                row.createCell(0).setCellValue(""); // SubcategoryId null ise boş bir değer atar.
             }
             row.createCell(1).setCellValue(subCategory.getSubcategoryName());
             row.createCell(2).setCellValue(String.join(",", subCategory.getCategoryNames()));
@@ -96,17 +103,19 @@ public class ExcelMultiServiceImpl implements ExcelMultiService {
         }
     }
 
+    // Başlık satırını ekleyen metot.
     private void addHeaders(Sheet sheet, String... headers) {
-        Row headerRow = sheet.createRow(0);
-        CellStyle headerCellStyle = sheet.getWorkbook().createCellStyle();
-        Font headerFont = sheet.getWorkbook().createFont();
-        headerFont.setBold(true);
-        headerCellStyle.setFont(headerFont);
+        Row headerRow = sheet.createRow(0); // Başlık satırını oluşturur.
+        CellStyle headerCellStyle = sheet.getWorkbook().createCellStyle(); // Başlık hücrelerinin stili.
+        Font headerFont = sheet.getWorkbook().createFont(); // Başlık fontu.
+        headerFont.setBold(true); // Kalın font kullanılır.
+        headerCellStyle.setFont(headerFont); // Başlık hücrelerine fontu uygular.
 
-        for (int i = 0; i < headers.length; i++) {
-            Cell cell = headerRow.createCell(i);
-            cell.setCellValue(headers[i]);
-            cell.setCellStyle(headerCellStyle);
+        for (int i = 0; i < headers.length; i++) { // Her başlık için döngü.
+            Cell cell = headerRow.createCell(i); // Hücre oluşturur.
+            cell.setCellValue(headers[i]); // Başlık değerini ekler.
+            cell.setCellStyle(headerCellStyle); // Hücreye stili uygular.
         }
     }
 }
+
